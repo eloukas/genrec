@@ -16,24 +16,33 @@ ydl_opts = {
 '''
     check_youtube_link(websocket, path)
 
-    -1- Gets a videoURL from the websocket
+    -1- Gets a video from the websocket
     -2- Checks if valid
     -3- Sends appropriate response ('OK/'NOT OK')
 '''
 async def check_youtube_link(websocket, path):
     videoURL = await websocket.recv()
     print("< Youtube link given: {}".format(videoURL))
+
     with youtube_dl.YoutubeDL(ydl_opts) as ydl:
         try:
+
+            # Get information about the YouTube video/song
             info_dict = ydl.extract_info(videoURL, download=False)
-            video_url = info_dict.get("url", None)
+            video_ref_url = info_dict.get("url", None)
             video_id = info_dict.get("id", None)
             video_title = info_dict.get('title', None)
 
-            print("Sending OK to client..")
+            print("< Sending OK to client..")
             await websocket.send('OK')
-        except Exception as exception: # Catch all exceptions
-            print(exception) # gets printed in any case
+
+            # Download the song
+            #ydl.download([video_url]) # videoplayback.mp3
+            ydl.download([videoURL])
+            print("< Video just got downloaded")
+
+        except Exception as e: # Catch all exceptions
+            #print(e.__class__.__name__) # (youtube-dl's is named DownloadError)
             print("Sending NOT OK to client..")
             await websocket.send('NOT OK')
 
